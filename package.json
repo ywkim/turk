@@ -1,6 +1,7 @@
 {
   "name": "turk",
   "version": "0.1.0",
+  "homepage": "http://ywkim.github.io/turk",
   "private": true,
   "dependencies": {
     "react": "^16.3.1",
@@ -9,8 +10,13 @@
   },
   "scripts": {
     "start": "react-scripts start",
-    "build": "react-scripts build",
+    "build": "PUBLIC_URL=https://ywkim.github.io/turk react-scripts build",
     "test": "react-scripts test --env=jsdom",
-    "eject": "react-scripts eject"
+    "eject": "react-scripts eject",
+    "predeploy": "yarn run build",
+    "deploy": "gh-pages -d build"
+  },
+  "devDependencies": {
+    "gh-pages": "^1.1.0"
   }
 }

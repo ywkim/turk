@@ -23,6 +23,7 @@ import os
 import click
 import boto3
 from xml.dom.minidom import parseString
+from urllib.parse import urlparse, parse_qs
 
 # Before connecting to MTurk, set up your AWS account and IAM settings as
 # described here:
@@ -59,6 +60,18 @@ def get_answers(hit_id):
         AssignmentStatuses=['Submitted', 'Approved'],
         MaxResults=10,
     )
+
+    question_xml = parseString(hit['HIT']['Question'])
+    # the question is an xml document. we pull out the value of
+    # //ExternalQuestion/ExternalURL
+    question = question_xml.getElementsByTagName('ExternalURL')[0]
+    # See https://stackoverflow.com/questions/317413
+    question = ' '.join(
+        t.nodeValue for t in question.childNodes if t.nodeType == t.TEXT_NODE)
+    query = parse_qs(urlparse(question).query)
+    user_say = json.loads(query['userSay'][0])
+    user_say_text = ''.join(item['text'] for item in user_say['data'])
+    logging.info('Question phrase: "{}"'.format(user_say_text))
 
     assignments = response['Assignments']
     logging.info('The number of submitted assignments is {}'.format(

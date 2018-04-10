@@ -111,6 +111,7 @@ const mapActions = dispatch => ({
 class App extends Component {
   selectionAnchorNode: Node;
   inputNode: HTMLInputElement;
+  formNode: HTMLFormElement;
 
   componentDidMount() {
     document.addEventListener(
@@ -221,7 +222,7 @@ class App extends Component {
     // Check unknown entity
     const unknown = translation.data.find(e => e.id === -1);
     if (unknown) {
-      return [`Entity for "${unknown.text}" is not selected. 🤔`];
+      return [`The entity is not selected. 🤔`];
     }
     return ['No error'];
   }
@@ -249,12 +250,7 @@ class App extends Component {
   }
 
   handleSubmit = () => {
-    const url = `${getParameters().turkSubmitTo}/mturk/externalSubmit`;
-    const formData = new FormData();
-    formData.append('assignmentId', getParameters().assignmentId);
-    formData.append('translation', this.makeAnswer());
-    const request = { method: 'POST', body: formData };
-    fetch(url, request);
+    this.formNode.submit();
   };
 
   render() {
@@ -300,122 +296,151 @@ class App extends Component {
 
     return (
       <div>
-        <Row>
-          <Col
-            xs={{ span: 24, offset: 0 }}
-            lg={{ span: 8, offset: 8 }}
-            type="flex"
-            align="middle"
-            style={{ paddingTop: 2 }}
-          >
-            {isAnnotationEnabled() && (
-              <Collapse style={{ marginBottom: 5 }}>
-                <Panel
-                  header="Annotation Instructions (Click to expand)"
-                  key="1"
-                >
-                  <p>
-                    <b>Annotation</b> is a process of linking a word (or phrase)
-                    to an entity.
-                  </p>
-                  <p>
-                    You have to annotate the translation by selecting a word or
-                    phrase and choosing an entity.
-                  </p>
-                </Panel>
-              </Collapse>
-            )}
-            <Card title="English" style={{ marginBottom: 5 }}>
-              <h1 onCopy={this.handleCopy} style={{ marginBottom: 5 }}>
-                {getUserSay().data.map(e => (
-                  <span key={e.id} style={e.alias ? getColor(e.id) : undefined}>
-                    {e.text}
-                  </span>
-                ))}
-              </h1>
-              {isAnnotationEnabled() && (
-                <div style={{ marginBottom: 5 }}>
-                  <SourceEntityTable entities={getSourceEntities()} />
-                </div>
-              )}
-            </Card>
-
-            <Icon type="caret-down" style={{ marginBottom: 5, fontSize: 32 }} />
-
-            <Card
-              title={LANGUAGES[getParameters().language]}
-              style={{ marginBottom: 5 }}
+        <form
+          name="mturk_form"
+          method="post"
+          id="mturk_form"
+          action={`${getParameters().turkSubmitTo}/mturk/externalSubmit`}
+          ref={node => {
+            // eslint-disable-next-line react/no-find-dom-node
+            this.formNode = node && findDOMNode(node);
+          }}
+        >
+          <input
+            type="hidden"
+            value={getParameters().assignmentId}
+            name="assignmentId"
+            id="assignmentId"
+          />
+          <input
+            type="hidden"
+            value={this.makeAnswer()}
+            name="translation"
+            id="translation"
+          />
+          <Row>
+            <Col
+              xs={{ span: 24, offset: 0 }}
+              lg={{ span: 8, offset: 8 }}
+              type="flex"
+              align="middle"
+              style={{ paddingTop: 2 }}
             >
-              <div style={{ width: '100%', marginBottom: 5 }}>
-                <div
-                  style={{ position: 'relative' }}
-                  ref={node => {
-                    this.selectionAnchorNode = node;
-                  }}
-                >
-                  <Input
+              {isAnnotationEnabled() && (
+                <Collapse style={{ marginBottom: 5 }}>
+                  <Panel
+                    header="Annotation Instructions (Click to expand)"
+                    key="1"
+                  >
+                    <p>
+                      <b>Annotation</b> is a process of linking a word (or
+                      phrase) to an entity.
+                    </p>
+                    <p>
+                      You have to annotate the translation by selecting a word
+                      or phrase and choosing an entity.
+                    </p>
+                  </Panel>
+                </Collapse>
+              )}
+              <Card title="English" style={{ marginBottom: 5 }}>
+                <h1 onCopy={this.handleCopy} style={{ marginBottom: 5 }}>
+                  {getUserSay().data.map(e => (
+                    <span
+                      key={e.id}
+                      style={e.alias ? getColor(e.id) : undefined}
+                    >
+                      {e.text}
+                    </span>
+                  ))}
+                </h1>
+                {isAnnotationEnabled() && (
+                  <div style={{ marginBottom: 5 }}>
+                    <SourceEntityTable entities={getSourceEntities()} />
+                  </div>
+                )}
+              </Card>
+
+              <Icon
+                type="caret-down"
+                style={{ marginBottom: 5, fontSize: 32 }}
+              />
+
+              <Card
+                title={LANGUAGES[getParameters().language]}
+                style={{ marginBottom: 5 }}
+              >
+                <div style={{ width: '100%', marginBottom: 5 }}>
+                  <div
+                    style={{ position: 'relative' }}
                     ref={node => {
-                      // eslint-disable-next-line react/no-find-dom-node
-                      this.inputNode = node && findDOMNode(node);
+                      this.selectionAnchorNode = node;
                     }}
-                    onPaste={this.handlePaste}
-                    onChange={this.handleTextChange}
-                    value={this.props.translation.data
-                      .map(item => item.text)
-                      .join('')}
-                    placeholder="translation"
-                  />
-                  <div style={{ ...styles.zeroPos, ...styles.highlightText }}>
-                    {this.props.translation.data.map((e, i) => (
-                      // eslint-disable-next-line react/no-array-index-key
-                      <span key={i} style={e.id && { ...getColor(e.id) }}>
-                        {e.text}
-                      </span>
-                    ))}
+                  >
+                    <Input
+                      ref={node => {
+                        // eslint-disable-next-line react/no-find-dom-node
+                        this.inputNode = node && findDOMNode(node);
+                      }}
+                      onPaste={this.handlePaste}
+                      onChange={this.handleTextChange}
+                      value={this.props.translation.data
+                        .map(item => item.text)
+                        .join('')}
+                      placeholder="translation"
+                    />
+                    <div style={{ ...styles.zeroPos, ...styles.highlightText }}>
+                      {this.props.translation.data.map((e, i) => (
+                        // eslint-disable-next-line react/no-array-index-key
+                        <span key={i} style={e.id && { ...getColor(e.id) }}>
+                          {e.text}
+                        </span>
+                      ))}
+                    </div>
                   </div>
                 </div>
-              </div>
-              {isAnnotationEnabled() && (
-                <div style={{ marginBottom: 5 }}>
-                  <Table
-                    style={{ marginBottom: 8 }}
-                    size="small"
-                    pagination={false}
-                    columns={columns}
-                    dataSource={this.props.translation.data
-                      .map((e, index) => ({
-                        ...e,
-                        index,
-                        key: `${index}: ${e.text}`,
-                      }))
-                      .filter(e => e.id)}
-                    rowKey="key"
-                  />
-                </div>
-              )}
-            </Card>
-            {!this.isValid() &&
-              this.errorMessages().length > 0 && (
-                <div style={{ marginBottom: 5 }}>
-                  {this.errorMessages().map(m => (
-                    <Alert key={m} message={m} type="error" />
-                  ))}
-                </div>
-              )}
-            <p>
-              <Button
-                type="primary"
-                id="submitButton"
-                disabled={isPreview() || !this.isValid()}
-                onClick={this.handleSubmit}
-              >
-                {isPreview()
-                  ? 'You must ACCEPT the HIT before you can submit the results.'
-                  : 'Submit'}
-              </Button>
-            </p>
-          </Col>
-        </Row>
+                {isAnnotationEnabled() && (
+                  <div style={{ marginBottom: 5 }}>
+                    <Table
+                      style={{ marginBottom: 8 }}
+                      size="small"
+                      pagination={false}
+                      columns={columns}
+                      dataSource={this.props.translation.data
+                        .map((e, index) => ({
+                          ...e,
+                          index,
+                          key: `${index}: ${e.text}`,
+                        }))
+                        .filter(e => e.id)}
+                      rowKey="key"
+                    />
+                  </div>
+                )}
+              </Card>
+              {!this.isValid() &&
+                this.errorMessages().length > 0 && (
+                  <div style={{ marginBottom: 5 }}>
+                    {this.errorMessages().map(m => (
+                      <Alert key={m} message={m} type="error" />
+                    ))}
+                  </div>
+                )}
+              <p>
+                <Button
+                  type="primary"
+                  id="submitButton"
+                  disabled={isPreview() || !this.isValid()}
+                  onClick={this.handleSubmit}
+                >
+                  {isPreview()
+                    ? 'You must ACCEPT the HIT before you can submit the results.'
+                    : 'Submit'}
+                </Button>
+              </p>
+            </Col>
+          </Row>
+        </form>
       </div>
     );
   }

@@ -13,6 +13,7 @@ import {
   Alert,
   Button,
   Card,
+  Collapse,
   message,
 } from 'antd';
 import { omit } from 'lodash';
@@ -52,6 +53,7 @@ const styles = {
 };
 
 const { Option } = Select;
+const { Panel } = Collapse;
 
 function getUserSay() {
   if (isPreview()) {
@@ -171,8 +173,12 @@ class App extends Component {
   };
 
   isValid() {
-    // Check unknown entity
     const { translation } = this.props;
+    // Check translation
+    if (!translation.data.map(item => item.text).join('').length) {
+      return false;
+    }
+    // Check unknown entity
     const unknown = translation.data.find(e => e.id === -1);
     if (unknown) {
       return false;
@@ -188,6 +194,10 @@ class App extends Component {
 
   errorMessages() {
     const { translation } = this.props;
+    // Check translation
+    if (!translation.data.map(item => item.text).join('').length) {
+      return [];
+    }
     const messages = [];
     // Check whether all entities are present
     getUserSay()
@@ -304,11 +314,24 @@ class App extends Component {
             lg={{ span: 8, offset: 8 }}
             type="flex"
             align="middle"
+            style={{ paddingTop: 2 }}
           >
-            <Card title="English" style={{ marginTop: 2, marginBottom: 5 }}>
+            <Collapse style={{ marginBottom: 5 }}>
+              <Panel header="Annotation Instructions (Click to expand)" key="1">
+                <p>
+                  <b>Annotation</b> is a process of linking a word (or phrase)
+                  to an entity.
+                </p>
+                <p>
+                  You have to annotate the translation by selecting a word or
+                  phrase and choosing an entity.
+                </p>
+              </Panel>
+            </Collapse>
+            <Card title="English" style={{ marginBottom: 5 }}>
               <h1 onCopy={this.handleCopy} style={{ marginBottom: 5 }}>
                 {getUserSay().data.map(e => (
-                  <span key={e.id} style={e.alias && { ...getColor(e.id) }}>
+                  <span key={e.id} style={e.alias ? getColor(e.id) : undefined}>
                     {e.text}
                   </span>
                 ))}
@@ -372,13 +395,14 @@ class App extends Component {
                 />
               </div>
             </Card>
-            {!this.isValid() && (
-              <div style={{ marginBottom: 5 }}>
-                {this.errorMessages().map(m => (
-                  <Alert key={m} message={m} type="error" />
-                ))}
-              </div>
-            )}
+            {!this.isValid() &&
+              this.errorMessages().length > 0 && (
+                <div style={{ marginBottom: 5 }}>
+                  {this.errorMessages().map(m => (
+                    <Alert key={m} message={m} type="error" />
+                  ))}
+                </div>
+              )}
             <p>
               <Button
                 type="primary"

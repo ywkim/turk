@@ -1,4 +1,3 @@
-'use strict';
 module.exports = str =>
   encodeURIComponent(str).replace(
     /[!'()*]/g,

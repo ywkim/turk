@@ -120,7 +120,7 @@ def publish_task(hit_type_id, user_say, language):
         'http://mechanicalturk.amazonaws.com/AWSMechanicalTurkDataSchemas/2006-07-14/ExternalQuestion.xsd'
     )
     ElementTree.SubElement(xml, 'ExternalURL').text = external_url
-    ElementTree.SubElement(xml, 'FrameHeight').text = '450'
+    ElementTree.SubElement(xml, 'FrameHeight').text = '720'
     question = ElementTree.tostring(xml).decode()
     # Create the HIT
     response = client.create_hit_with_hit_type(

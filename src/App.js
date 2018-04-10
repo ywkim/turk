@@ -322,8 +322,6 @@ class App extends Component {
             <Col
               xs={{ span: 24, offset: 0 }}
               lg={{ span: 8, offset: 8 }}
-              type="flex"
-              align="middle"
               style={{ paddingTop: 2 }}
             >
               {isAnnotationEnabled() && (
@@ -361,10 +359,9 @@ class App extends Component {
                 )}
               </Card>
 
-              <Icon
-                type="caret-down"
-                style={{ marginBottom: 5, fontSize: 32 }}
-              />
+              <div style={{ marginBottom: 5, textAlign: 'center' }}>
+                <Icon type="caret-down" style={{ fontSize: 32 }} />
+              </div>
 
               <Card
                 title={LANGUAGES[getParameters().language]}

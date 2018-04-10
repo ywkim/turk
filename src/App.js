@@ -253,6 +253,12 @@ class App extends Component {
     this.formNode.submit();
   };
 
+  handleFormSubmit = e => {
+    if (isPreview() || !this.isValid()) {
+      e.preventDefault();
+    }
+  };
+
   render() {
     const columns = [
       {
@@ -305,6 +311,7 @@ class App extends Component {
             // eslint-disable-next-line react/no-find-dom-node
             this.formNode = node && findDOMNode(node);
           }}
+          onSubmit={this.handleFormSubmit}
         >
           <input
             type="hidden"

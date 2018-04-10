@@ -56,33 +56,36 @@ const { Option } = Select;
 const { Panel } = Collapse;
 
 function getUserSay() {
-  if (isPreview()) {
-    return {
-      data: [
-        {
-          id: 1,
-          text: 'can',
-          meta: '@sys.ignore',
-        },
-        {
-          id: 2,
-          text: ' I see the tourist places in ',
-        },
-        {
-          id: 3,
-          text: 'Japan',
-          alias: 'location',
-          meta: '@sys.location',
-        },
-      ],
-    };
-  }
   return {
-    data: JSON.parse(getParameters().userSay).data.map((e, i) => ({
+    data: (isPreview()
+      ? [
+          {
+            text: 'can',
+            meta: '@sys.ignore',
+          },
+          {
+            text: ' I see the tourist places in ',
+          },
+          {
+            text: 'Japan',
+            alias: 'location',
+            meta: '@sys.location',
+          },
+        ]
+      : JSON.parse(getParameters().userSay).data
+    ).map((e, i) => ({
       ...e,
       id: i + 1,
     })),
   };
+}
+
+function getSourceEntities() {
+  return getUserSay().data.filter(e => e.alias);
+}
+
+function isAnnotationEnabled() {
+  return getSourceEntities().length > 0;
 }
 
 function findEntityById(id) {
@@ -117,6 +120,7 @@ class App extends Component {
         const selection = window.getSelection();
 
         if (
+          isAnnotationEnabled() &&
           selection.anchorNode &&
           selection.anchorNode === this.selectionAnchorNode
         ) {
@@ -184,12 +188,10 @@ class App extends Component {
       return false;
     }
     // Check whether all entities are present
-    return getUserSay()
-      .data.filter(e => e.alias)
-      .every(
-        entity =>
-          translation.data.filter(item => item.id === entity.id).length === 1
-      );
+    return getSourceEntities().every(
+      entity =>
+        translation.data.filter(item => item.id === entity.id).length === 1
+    );
   }
 
   errorMessages() {
@@ -200,27 +202,19 @@ class App extends Component {
     }
     const messages = [];
     // Check whether all entities are present
-    getUserSay()
-      .data.filter(e => e.alias)
-      .forEach(entity => {
-        if (
-          translation.data.filter(item => item.id === entity.id).length === 0
-        ) {
-          messages.push(
-            `${entity.alias} ("${entity.text}") is not selected. 😞`
-          );
-        }
-      });
+    getSourceEntities().forEach(entity => {
+      if (translation.data.filter(item => item.id === entity.id).length === 0) {
+        messages.push(`${entity.alias} ("${entity.text}") is not selected. 😞`);
+      }
+    });
     // Check duplicated entities
-    getUserSay()
-      .data.filter(e => e.alias)
-      .forEach(entity => {
-        if (translation.data.filter(item => item.id === entity.id).length > 1) {
-          messages.push(
-            `There are multiple ${entity.alias} ("${entity.text}"). 😲`
-          );
-        }
-      });
+    getSourceEntities().forEach(entity => {
+      if (translation.data.filter(item => item.id === entity.id).length > 1) {
+        messages.push(
+          `There are multiple ${entity.alias} ("${entity.text}"). 😲`
+        );
+      }
+    });
     if (messages.length) {
       return messages;
     }
@@ -277,11 +271,9 @@ class App extends Component {
               this.handleEntityChange(entity.index, parseInt(value, 10))
             }
           >
-            {getUserSay()
-              .data.filter(e => e.alias)
-              .map(e => (
-                <Option key={`${e.id}`}>{`${e.alias} ("${e.text}")`}</Option>
-              ))}
+            {getSourceEntities().map(e => (
+              <Option key={`${e.id}`}>{`${e.alias} ("${e.text}")`}</Option>
+            ))}
           </Select>
         ),
       },
@@ -316,18 +308,23 @@ class App extends Component {
             align="middle"
             style={{ paddingTop: 2 }}
           >
-            <Collapse style={{ marginBottom: 5 }}>
-              <Panel header="Annotation Instructions (Click to expand)" key="1">
-                <p>
-                  <b>Annotation</b> is a process of linking a word (or phrase)
-                  to an entity.
-                </p>
-                <p>
-                  You have to annotate the translation by selecting a word or
-                  phrase and choosing an entity.
-                </p>
-              </Panel>
-            </Collapse>
+            {isAnnotationEnabled() && (
+              <Collapse style={{ marginBottom: 5 }}>
+                <Panel
+                  header="Annotation Instructions (Click to expand)"
+                  key="1"
+                >
+                  <p>
+                    <b>Annotation</b> is a process of linking a word (or phrase)
+                    to an entity.
+                  </p>
+                  <p>
+                    You have to annotate the translation by selecting a word or
+                    phrase and choosing an entity.
+                  </p>
+                </Panel>
+              </Collapse>
+            )}
             <Card title="English" style={{ marginBottom: 5 }}>
               <h1 onCopy={this.handleCopy} style={{ marginBottom: 5 }}>
                 {getUserSay().data.map(e => (
@@ -336,11 +333,11 @@ class App extends Component {
                   </span>
                 ))}
               </h1>
-              <div style={{ marginBottom: 5 }}>
-                <SourceEntityTable
-                  entities={getUserSay().data.filter(e => e.alias)}
-                />
-              </div>
+              {isAnnotationEnabled() && (
+                <div style={{ marginBottom: 5 }}>
+                  <SourceEntityTable entities={getSourceEntities()} />
+                </div>
+              )}
             </Card>
 
             <Icon type="caret-down" style={{ marginBottom: 5, fontSize: 32 }} />
@@ -378,22 +375,24 @@ class App extends Component {
                   </div>
                 </div>
               </div>
-              <div style={{ marginBottom: 5 }}>
-                <Table
-                  style={{ marginBottom: 8 }}
-                  size="small"
-                  pagination={false}
-                  columns={columns}
-                  dataSource={this.props.translation.data
-                    .map((e, index) => ({
-                      ...e,
-                      index,
-                      key: `${index}: ${e.text}`,
-                    }))
-                    .filter(e => e.id)}
-                  rowKey="key"
-                />
-              </div>
+              {isAnnotationEnabled() && (
+                <div style={{ marginBottom: 5 }}>
+                  <Table
+                    style={{ marginBottom: 8 }}
+                    size="small"
+                    pagination={false}
+                    columns={columns}
+                    dataSource={this.props.translation.data
+                      .map((e, index) => ({
+                        ...e,
+                        index,
+                        key: `${index}: ${e.text}`,
+                      }))
+                      .filter(e => e.id)}
+                    rowKey="key"
+                  />
+                </div>
+              )}
             </Card>
             {!this.isValid() &&
               this.errorMessages().length > 0 && (

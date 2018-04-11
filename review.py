@@ -52,6 +52,12 @@ client = session.client(
 )
 
 
+def format_user_say(data):
+    return ''.join((
+        '<{alias}>{text}</{alias}>' if 'alias' in x else '{text}').format(**x)
+                   for x in data)
+
+
 def get_answers(hit_id, auto_approval):
     hit = client.get_hit(HITId=hit_id)
     logging.info('Hit {} status: {}'.format(hit_id, hit['HIT']['HITStatus']))
@@ -70,7 +76,7 @@ def get_answers(hit_id, auto_approval):
         t.nodeValue for t in question.childNodes if t.nodeType == t.TEXT_NODE)
     query = parse_qs(urlparse(question).query)
     user_say = json.loads(query['userSay'][0])
-    user_say_text = ''.join(item['text'] for item in user_say['data'])
+    user_say_text = format_user_say(user_say['data'])
     logging.info('Question phrase: "{}"'.format(user_say_text))
 
     assignments = response['Assignments']
@@ -90,7 +96,7 @@ def get_answers(hit_id, auto_approval):
         answer = ' '.join(t.nodeValue for t in answer.childNodes
                           if t.nodeType == t.TEXT_NODE)
         answer = json.loads(answer)
-        answer_text = ''.join(x['text'] for x in answer['data'])
+        answer_text = format_user_say(answer['data'])
 
         logging.info('The Worker with ID {} submitted assignment {}'.format(
             worker_id, assignment_id))

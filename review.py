@@ -105,8 +105,8 @@ def get_answers(hit_id, auto_approval):
 
         # Approve the Assignment (if it hasn't already been approved)
         if assignment['AssignmentStatus'] == 'Submitted':
-            if auto_approval or (input('Approve assignment [Y/n]: ')
-                                 or 'Y') == 'Y':
+            approval = (input('Approve assignment [Y/n/skip]: ') or 'Y')
+            if auto_approval or approval == 'Y':
                 logging.info('Approving Assignment {}'.format(assignment_id))
                 client.approve_assignment(
                     AssignmentId=assignment_id,
@@ -114,7 +114,7 @@ def get_answers(hit_id, auto_approval):
                     OverrideRejection=False,
                 )
                 answers.append(answer)
-            else:
+            elif approval == 'n':
                 logging.info('Rejecting Assignment {}'.format(assignment_id))
                 client.reject_assignment(
                     AssignmentId=assignment_id,

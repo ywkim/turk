@@ -52,7 +52,7 @@ client = session.client(
 )
 
 
-def get_answers(hit_id):
+def get_answers(hit_id, auto_approval):
     hit = client.get_hit(HITId=hit_id)
     logging.info('Hit {} status: {}'.format(hit_id, hit['HIT']['HITStatus']))
     response = client.list_assignments_for_hit(
@@ -90,29 +90,41 @@ def get_answers(hit_id):
         answer = ' '.join(t.nodeValue for t in answer.childNodes
                           if t.nodeType == t.TEXT_NODE)
         answer = json.loads(answer)
-        answer_text = ' '.join(x['text'] for x in answer['data'])
-        answers.append(answer)
+        answer_text = ''.join(x['text'] for x in answer['data'])
 
-        logging.info(
-            'The Worker with ID {} submitted assignment {} and gave the answer "{}"'.
-            format(worker_id, assignment_id, answer_text))
+        logging.info('The Worker with ID {} submitted assignment {}'.format(
+            worker_id, assignment_id))
+        logging.info('Translation: "{}" ({})'.format(
+            answer_text, assignment['AssignmentStatus']))
 
         # Approve the Assignment (if it hasn't already been approved)
         if assignment['AssignmentStatus'] == 'Submitted':
-            logging.info('Approving Assignment {}'.format(assignment_id))
-            client.approve_assignment(
-                AssignmentId=assignment_id,
-                RequesterFeedback='good',
-                OverrideRejection=False,
-            )
+            if auto_approval or (input('Approve assignment [Y/n]: ')
+                                 or 'Y') == 'Y':
+                logging.info('Approving Assignment {}'.format(assignment_id))
+                client.approve_assignment(
+                    AssignmentId=assignment_id,
+                    RequesterFeedback='good',
+                    OverrideRejection=False,
+                )
+                answers.append(answer)
+            else:
+                logging.info('Rejecting Assignment {}'.format(assignment_id))
+                client.reject_assignment(
+                    AssignmentId=assignment_id,
+                    RequesterFeedback='poor quality',
+                )
+        elif assignment['AssignmentStatus'] == 'Approved':
+            answers.append(answer)
 
     return answers
 
 
 @click.command()
 @click.argument('task_filename')
+@click.option('--yes/--no-yes', default=False)
 @click.option('--verbose/--no-verbose', default=False)
-def translate(task_filename, verbose):
+def translate(task_filename, yes, verbose):
     if verbose:
         logging.getLogger().setLevel(logging.DEBUG)
 
@@ -124,7 +136,8 @@ def translate(task_filename, verbose):
             json.dump(
                 [
                     answer
-                    for task in tasks for answer in get_answers(task['HITId'])
+                    for task in tasks
+                    for answer in get_answers(task['HITId'], yes)
                 ],
                 w,
                 indent=4)

@@ -135,6 +135,7 @@ class App extends Component {
       },
       false
     );
+    this.inputNode.focus();
   }
 
   handleTextChange = e => {

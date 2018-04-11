@@ -51,7 +51,9 @@ languages = {
     'fr': 'French',
     'it': 'Italian',
     'es': 'Spanish',
-    'pt': 'Portuguese'
+    'pt': 'Portuguese (Portugal)',
+    'de': 'German',
+    'pt-br': 'Portuguese (Brazil)'
 }
 
 logging.getLogger().setLevel(logging.INFO)

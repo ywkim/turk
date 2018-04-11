@@ -61,6 +61,25 @@ const PREVIEW = {
       meta: '@sys.location',
     },
   ],
+  de: [
+    { text: 'Kann ich die Touristenorte in ' },
+    {
+      id: 3,
+      text: 'Japan',
+      alias: 'location',
+      meta: '@sys.location',
+    },
+    { text: ' sehen?' },
+  ],
+  'pt-br': [
+    { text: 'posso ver os lugares turísticos no ' },
+    {
+      id: 3,
+      text: 'Japão',
+      alias: 'location',
+      meta: '@sys.location',
+    },
+  ],
 };
 
 const INITIAL_STATE = {

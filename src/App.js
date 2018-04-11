@@ -230,6 +230,23 @@ class App extends Component {
     return ['No error'];
   }
 
+  warningMessages() {
+    const { translation } = this.props;
+    // Non-entity text are not provided
+    if (
+      translation.data
+        .filter(item => !item.id)
+        .map(item => item.text)
+        .join('')
+        .trim().length === 0
+    ) {
+      return [
+        'Any abuse of the system, such as not providing a complete translation, may result to your HIT being rejected.',
+      ];
+    }
+    return [];
+  }
+
   makeAnswer() {
     const { translation } = this.props;
 
@@ -429,7 +446,15 @@ class App extends Component {
                 this.errorMessages().length > 0 && (
                   <div style={{ marginBottom: 5 }}>
                     {this.errorMessages().map(m => (
-                      <Alert key={m} message={m} type="error" />
+                      <Alert key={m} message={m} type="error" showIcon />
+                    ))}
+                  </div>
+                )}
+              {this.isValid() &&
+                this.warningMessages().length > 0 && (
+                  <div style={{ marginBottom: 5 }}>
+                    {this.warningMessages().map(m => (
+                      <Alert key={m} message={m} type="warning" showIcon />
                     ))}
                   </div>
                 )}

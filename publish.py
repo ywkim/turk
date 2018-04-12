@@ -65,17 +65,6 @@ client = session.client(
     endpoint_url=ENDPOINT,
 )
 
-# The question we ask the workers is contained in this file.
-# Example of using qualification to restrict responses to Workers who have had
-# at least 80% of their assignments approved. See:
-# http://docs.aws.amazon.com/AWSMechTurk/latest/AWSMturkAPI/ApiReference_QualificationRequirementDataStructureArticle.html#ApiReference_QualificationType-IDs
-worker_requirements = [{
-    'QualificationTypeId': '000000000000000000L0',
-    'Comparator': 'GreaterThanOrEqualTo',
-    'IntegerValues': [80],
-    'RequiredToPreview': True,
-}]
-
 
 def print_balance():
     # Test that you can connect to the API by checking your account balance
@@ -88,6 +77,16 @@ def print_balance():
 
 
 def publish_tasks(params, user_says, language):
+    # The question we ask the workers is contained in this file.
+    # Example of using qualification to restrict responses to Workers who have
+    # had at least 80% of their assignments approved. See:
+    # http://docs.aws.amazon.com/AWSMechTurk/latest/AWSMturkAPI/ApiReference_QualificationRequirementDataStructureArticle.html#ApiReference_QualificationType-IDs
+    worker_requirements = [{
+        'QualificationTypeId': '000000000000000000L0',
+        'Comparator': 'GreaterThanOrEqualTo',
+        'IntegerValues': [params['qualification']],
+        'RequiredToPreview': True,
+    }]
 
     # Create the Hit type
     response = client.create_hit_type(
@@ -98,7 +97,7 @@ def publish_tasks(params, user_says, language):
             languages[language]),
         Keywords='translation, chatbot',
         Description=
-        'This HIT will require you to translate from English conversation sentences into {}.'.
+        'This HIT will require you to translate from English conversation sentences into {} and annotate them.'.
         format(languages[language]),
         QualificationRequirements=worker_requirements)
 
@@ -148,6 +147,7 @@ def publish_task(params, hit_type_id, user_say, language):
 @click.option('--auto_approval', default=86400)
 @click.option('--max_tasks', default=12)
 @click.option('--lifetime', default=86400)
+@click.option('--qualification', default=90)
 @click.option('--verbose/--no-verbose', default=False)
 def publish(filename, **kwargs):
     verbose = kwargs['verbose']

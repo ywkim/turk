@@ -97,7 +97,7 @@ def publish_tasks(params, user_says, language):
             languages[language]),
         Keywords='translation, chatbot',
         Description=
-        'This HIT will require you to translate from English conversation sentences into {} and annotate them.'.
+        'In this task, you will need to translate from English conversation sentences into {} and annotate them.'.
         format(languages[language]),
         QualificationRequirements=worker_requirements)
 

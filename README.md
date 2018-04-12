@@ -6,7 +6,7 @@ Translate and annotate user expressions via Mechanical Turk
 
 Run `pipenv run python publish.py <usersays_en.json>`
 
-## To review an MTurk task:
+### To review an MTurk task:
 
 Run `pipenv run python review.py <tasks_lang.json>`
 

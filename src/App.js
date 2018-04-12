@@ -198,40 +198,45 @@ class App extends Component {
     );
   }
 
-  errorMessages() {
+  messages() {
     const { translation } = this.props;
-    // Check translation
-    if (!translation.data.map(item => item.text).join('').length) {
-      return [];
-    }
-    const messages = [];
-    // Check whether all entities are present
-    getSourceEntities().forEach(entity => {
-      if (translation.data.filter(item => item.id === entity.id).length === 0) {
-        messages.push(`${entity.alias} ("${entity.text}") is not selected. 😞`);
+    if (!this.isValid()) {
+      // Check translation
+      if (!translation.data.map(item => item.text).join('').length) {
+        return [];
       }
-    });
-    // Check duplicated entities
-    getSourceEntities().forEach(entity => {
-      if (translation.data.filter(item => item.id === entity.id).length > 1) {
-        messages.push(
-          `There are multiple ${entity.alias} ("${entity.text}"). 😲`
-        );
+      const messages = [];
+      // Check whether all entities are present
+      getSourceEntities().forEach(entity => {
+        if (
+          translation.data.filter(item => item.id === entity.id).length === 0
+        ) {
+          messages.push({
+            type: 'info',
+            text: `${entity.alias} ("${entity.text}") is not selected. 😞`,
+          });
+        }
+      });
+      // Check duplicated entities
+      getSourceEntities().forEach(entity => {
+        if (translation.data.filter(item => item.id === entity.id).length > 1) {
+          messages.push({
+            type: 'error',
+            text: `There are multiple ${entity.alias} ("${entity.text}"). 😲`,
+          });
+        }
+      });
+      if (messages.length) {
+        return messages;
       }
-    });
-    if (messages.length) {
-      return messages;
+      // Check unknown entity
+      const unknown = translation.data.find(e => e.id === -1);
+      if (unknown) {
+        return [{ type: 'error', text: `The entity is not selected. 🤔` }];
+      }
+      return [{ type: 'error', text: 'No error' }];
     }
-    // Check unknown entity
-    const unknown = translation.data.find(e => e.id === -1);
-    if (unknown) {
-      return [`The entity is not selected. 🤔`];
-    }
-    return ['No error'];
-  }
 
-  warningMessages() {
-    const { translation } = this.props;
     // Non-entity text are not provided
     if (
       translation.data
@@ -241,7 +246,11 @@ class App extends Component {
         .trim().length === 0
     ) {
       return [
-        'Any abuse of the system, such as not providing a complete translation, may result to your HIT being rejected.',
+        {
+          type: 'warning',
+          text:
+            'Any abuse of the system, such as not providing a complete translation, may result to your HIT being rejected.',
+        },
       ];
     }
     return [];
@@ -443,18 +452,10 @@ class App extends Component {
                 )}
               </Card>
               {!this.isValid() &&
-                this.errorMessages().length > 0 && (
+                this.messages().length > 0 && (
                   <div style={{ marginBottom: 5 }}>
-                    {this.errorMessages().map(m => (
-                      <Alert key={m} message={m} type="error" showIcon />
-                    ))}
-                  </div>
-                )}
-              {this.isValid() &&
-                this.warningMessages().length > 0 && (
-                  <div style={{ marginBottom: 5 }}>
-                    {this.warningMessages().map(m => (
-                      <Alert key={m} message={m} type="warning" showIcon />
+                    {this.messages().map(m => (
+                      <Alert key={m} message={m.text} type={m.type} showIcon />
                     ))}
                   </div>
                 )}
